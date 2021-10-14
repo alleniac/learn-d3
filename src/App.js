@@ -1,30 +1,28 @@
+import { useState, useCallback } from 'react';
 import './App.css';
-import { range } from 'd3-array';
-import { Face } from './Face';
 
-const width = 160;
-const height = 160;
-
-const array = range(20);
+const width = window.innerWidth;
+const height = window.innerHeight;
+const circleRadius = 30;
 
 function App() {
+  const [mousePosition, setMousePosition] = useState({
+    x: width / 2,
+    y: height / 2,
+  });
+
+  const handleMouseMove = useCallback(
+    (event) => {
+      const { clientX, clientY } = event;
+      setMousePosition({ x: clientX, y: clientY });
+    },
+    [setMousePosition],
+  );
+
   return (
-    <>
-      {array.map(() => (
-        <Face
-          width={width}
-          height={height}
-          centerX={width / 2}
-          centerY={height / 2}
-          strokeWidth={10}
-          eyeOffsetX={30}
-          eyeOffsetY={30}
-          eyeRadius={10}
-          mouthWidth={10}
-          mouthRadius={40}
-        />
-      ))}
-    </>
+    <svg width={width} height={height} onMouseMove={handleMouseMove}>
+      <circle cx={mousePosition.x} cy={mousePosition.y} r={circleRadius} />
+    </svg>
   );
 }
 
