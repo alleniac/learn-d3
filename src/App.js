@@ -1,29 +1,20 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import * as d3 from 'd3';
 import './App.css';
 
-const width = window.innerWidth;
-const height = window.innerHeight;
-const circleRadius = 30;
+const csvUrl =
+  'https://gist.githubusercontent.com/alleniac/0bd95735c0e6ccc0cc84975f8027da99/raw/c6db8cd8c0600f5a8d0810f66a19ebb24e863264/cssNamedColors.csv';
 
 function App() {
-  const [mousePosition, setMousePosition] = useState({
-    x: width / 2,
-    y: height / 2,
-  });
+  const [data, setData] = useState(null);
 
-  const handleMouseMove = useCallback(
-    (event) => {
-      const { clientX, clientY } = event;
-      setMousePosition({ x: clientX, y: clientY });
-    },
-    [setMousePosition],
-  );
+  useEffect(() => {
+    d3.csv(csvUrl).then((data) => {
+      setData(data);
+    });
+  }, []);
 
-  return (
-    <svg width={width} height={height} onMouseMove={handleMouseMove}>
-      <circle cx={mousePosition.x} cy={mousePosition.y} r={circleRadius} />
-    </svg>
-  );
+  return <div></div>;
 }
 
 export default App;
