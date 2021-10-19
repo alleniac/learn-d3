@@ -1,47 +1,72 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import './App.css';
 
-const csvUrl =
-  'https://gist.githubusercontent.com/alleniac/0bd95735c0e6ccc0cc84975f8027da99/raw/c6db8cd8c0600f5a8d0810f66a19ebb24e863264/cssNamedColors.csv';
+const margin = {
+  top: 20,
+  right: 80,
+  bottom: 30,
+  left: 50,
+};
 
-const width = window.innerWidth;
-const height = window.innerHeight;
-const centerX = width / 2;
-const centerY = height / 2;
+const width = window.innerWidth - margin.left - margin.right;
+const height = window.innerHeight - margin.top - margin.bottom;
 
-const pieArc = d3.arc().innerRadius(0).outerRadius(width);
+const myData =
+  'date	New York	San Francisco	Austin\n\
+20111001	63.4	62.7	72.2\n\
+20111002	58.0	59.9	67.7\n\
+20111003	53.3	59.1	69.4\n\
+20111004	55.7	58.8	68.0\n\
+20111005	64.2	58.7	72.4\n\
+20111006	58.8	57.0	77.0\n\
+20111007	57.9	56.7	82.3\n\
+20111008	61.8	56.8	78.9\n\
+20111009	69.3	56.7	68.8\n\
+20111010	71.2	60.1	68.7\n\
+20111011	68.7	61.1	70.3\n\
+20111012	61.8	61.5	75.3\n\
+20111013	63.0	64.3	76.6\n\
+20111014	66.9	67.1	66.6\n\
+20111015	61.7	64.6	68.0\n\
+20111016	61.8	61.6	70.6\n\
+20111017	62.8	61.1	71.1\n\
+20111018	60.8	59.2	70.0\n\
+20111019	62.1	58.9	61.6\n\
+20111020	65.1	57.2	57.4\n\
+20111021	55.6	56.4	64.3\n\
+20111022	54.4	60.7	72.4\n';
 
 function App() {
+  const holderRef = useRef(null);
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    d3.csv(csvUrl).then((data) => {
-      setData(data);
+    const timeParser = d3.timeParse('%Y%m%d');
+    const parsedData = d3.tsvParse(myData);
+    const dates = [];
+    parsedData.forEach((d) => {
+      dates.push(timeParser(d.date));
     });
+    const domain = d3.extent(dates);
+    const xScale = d3.scaleTime().domain(domain).range([0, width]);
+    const xAxis = d3.axisBottom(xScale);
+    const svg = d3
+      .select(holderRef.current)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
+    svg
+      .append('g')
+      .attr('transform', `translate(${margin.left}, ${height - margin.bottom})`)
+      .call(xAxis);
   }, []);
 
-  if (!data) {
-    return <pre>Loading...</pre>;
-  }
+  // if (!data) {
+  //   return <pre>Loading...</pre>;
+  // }
 
-  console.log(data);
-
-  return (
-    <svg width={width} height={height}>
-      <g transform={`translate(${centerX}, ${centerY})`}>
-        {data.map((d, index) => (
-          <path
-            d={pieArc({
-              startAngle: (index / data.length) * 2 * Math.PI,
-              endAngle: ((index + 1) / data.length) * 2 * Math.PI,
-            })}
-            fill={d['RGB hex value']}
-          ></path>
-        ))}
-      </g>
-    </svg>
-  );
+  return <div ref={holderRef}></div>;
 }
 
 export default App;
