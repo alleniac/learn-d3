@@ -42,15 +42,61 @@ function App() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    const timeParser = d3.timeParse('%Y%m%d');
     const parsedData = d3.tsvParse(myData);
+
+    // construct xAxis
+    const timeParser = d3.timeParse('%Y%m%d');
     const dates = [];
     parsedData.forEach((d) => {
       dates.push(timeParser(d.date));
     });
-    const domain = d3.extent(dates);
-    const xScale = d3.scaleTime().domain(domain).range([0, width]);
+    const xDomain = d3.extent(dates);
+    const xScale = d3
+      .scaleTime()
+      .domain(xDomain)
+      .range([0, width - margin.right]);
     const xAxis = d3.axisBottom(xScale);
+
+    // Create categorical domain of 3 cities, and restructure the data
+    // so that data look like:
+    // { name: string; values: { date: string; temperature: number; } }[];
+    const color = d3
+      .scaleOrdinal(d3.schemeCategory10)
+      .domain(Object.keys(parsedData[0]).filter((key) => key !== 'date'));
+
+    const cities = color.domain().map((name) => ({
+      name,
+      values: parsedData.map((d) => ({
+        date: d.date,
+        temperature: +d[name],
+      })),
+    }));
+
+    // construct yAxis
+    const yDomainMin = cities.reduce((acc, city) => {
+      const cityMin = city.values.reduce((ac, val) => {
+        const cityTemperature = val.temperature;
+        return cityTemperature < ac ? cityTemperature : ac;
+      }, Number.MAX_VALUE);
+      return cityMin < acc ? cityMin : acc;
+    }, Number.MAX_VALUE);
+
+    const yDomainMax = cities.reduce((acc, city) => {
+      const cityMax = city.values.reduce((ac, val) => {
+        const cityTemperature = val.temperature;
+        return cityTemperature > ac ? cityTemperature : ac;
+      }, Number.MIN_VALUE);
+      return cityMax > acc ? cityMax : acc;
+    }, Number.MIN_VALUE);
+
+    const yScale = d3
+      .scaleLinear()
+      .domain([yDomainMin, yDomainMax])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
+    const yAxis = d3.axisLeft(yScale);
+
+    // plot the svg
     const svg = d3
       .select(holderRef.current)
       .append('svg')
@@ -60,6 +106,10 @@ function App() {
       .append('g')
       .attr('transform', `translate(${margin.left}, ${height - margin.bottom})`)
       .call(xAxis);
+    svg
+      .append('g')
+      .attr('transform', `translate(${margin.left}, 0)`)
+      .call(yAxis);
   }, []);
 
   // if (!data) {
