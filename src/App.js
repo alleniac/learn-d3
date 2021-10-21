@@ -96,12 +96,22 @@ function App() {
       .range([height - margin.bottom, margin.top]);
     const yAxis = d3.axisLeft(yScale);
 
-    // plot the svg
+    // Init the svg object
     const svg = d3
       .select(holderRef.current)
       .append('svg')
       .attr('width', width)
       .attr('height', height);
+
+    // legend
+    const legend = svg
+      .selectAll('g')
+      .data(cities)
+      .enter()
+      .append('g')
+      .attr('class', 'legend');
+    legend.append('rect').attr('x', width - margin.right);
+
     svg
       .append('g')
       .attr('transform', `translate(${margin.left}, ${height - margin.bottom})`)
@@ -110,6 +120,14 @@ function App() {
       .append('g')
       .attr('transform', `translate(${margin.left}, 0)`)
       .call(yAxis);
+    svg
+      .append('g')
+      .attr('transform', `translate(${margin.left + 10}, ${margin.top})`)
+      .attr('text-anchor', 'end')
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', 10)
+      .text('Temperature');
   }, []);
 
   // if (!data) {
