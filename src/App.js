@@ -54,7 +54,7 @@ function App() {
     const xScale = d3
       .scaleTime()
       .domain(xDomain)
-      .range([0, width - margin.right]);
+      .range([margin.left, width - margin.right]);
     const xAxis = d3.axisBottom(xScale);
 
     // Create categorical domain of 3 cities, and restructure the data
@@ -67,7 +67,7 @@ function App() {
     const cities = color.domain().map((name) => ({
       name,
       values: parsedData.map((d) => ({
-        date: d.date,
+        date: timeParser(d.date),
         temperature: +d[name],
       })),
     }));
@@ -112,9 +112,25 @@ function App() {
       .attr('class', 'legend');
     legend.append('rect').attr('x', width - margin.right);
 
+    // line
+    const line = d3
+      .line()
+      .x((d) => xScale(d.date))
+      .y((d) => yScale(d.temperature))
+      .curve(d3.curveBasis);
+
+    const city = svg.selectAll('.city').data(cities).enter().append('g');
+
+    city
+      .append('path')
+      .attr('class', 'line')
+      .style('fill', 'none')
+      .attr('d', (d) => line(d.values))
+      .style('stroke', (d) => color(d.name));
+
     svg
       .append('g')
-      .attr('transform', `translate(${margin.left}, ${height - margin.bottom})`)
+      .attr('transform', `translate(0, ${height - margin.bottom})`)
       .call(xAxis);
     svg
       .append('g')
