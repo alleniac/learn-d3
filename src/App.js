@@ -110,7 +110,20 @@ function App() {
       .enter()
       .append('g')
       .attr('class', 'legend');
-    legend.append('rect').attr('x', width - margin.right);
+
+    legend
+      .append('rect')
+      .attr('x', width - margin.right - 50)
+      .attr('y', (d, i) => margin.top + i * 20)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', (d) => color(d.name));
+
+    legend
+      .append('text')
+      .attr('x', width - margin.right - 30)
+      .attr('y', (d, i) => margin.top + i * 20 + 10)
+      .text((d) => d.name);
 
     // line
     const line = d3
