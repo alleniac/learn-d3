@@ -105,11 +105,9 @@ function App() {
 
     // legend
     const legend = svg
-      .selectAll('g')
+      .selectAll('.legend')
       .data(cities)
-      .enter()
-      .append('g')
-      .attr('class', 'legend');
+      .join((enter) => enter.append('g').attr('class', 'legend'));
 
     legend
       .append('rect')
@@ -132,7 +130,10 @@ function App() {
       .y((d) => yScale(d.temperature))
       .curve(d3.curveBasis);
 
-    const city = svg.selectAll('.city').data(cities).enter().append('g');
+    const city = svg
+      .selectAll('.city')
+      .data(cities)
+      .join((enter) => enter.append('g'));
 
     city
       .append('path')
