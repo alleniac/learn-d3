@@ -14,4 +14,6 @@ export const useData = () => {
       setData(data);
     });
   }, []);
+
+  return data;
 };
