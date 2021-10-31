@@ -42,6 +42,13 @@ function App() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
+    // Init the svg object
+    const svg = d3
+      .select(holderRef.current)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
+
     const parsedData = d3.tsvParse(myData);
 
     // construct xAxis
@@ -56,6 +63,11 @@ function App() {
       .domain(xDomain)
       .range([margin.left, width - margin.right]);
     const xAxis = d3.axisBottom(xScale);
+
+    svg
+      .append('g')
+      .attr('transform', `translate(0, ${height - margin.bottom})`)
+      .call(xAxis);
 
     // Create categorical domain of 3 cities, and restructure the data
     // so that data look like:
@@ -96,12 +108,20 @@ function App() {
       .range([height - margin.bottom, margin.top]);
     const yAxis = d3.axisLeft(yScale);
 
-    // Init the svg object
-    const svg = d3
-      .select(holderRef.current)
-      .append('svg')
-      .attr('width', width)
-      .attr('height', height);
+    svg
+      .append('g')
+      .attr('transform', `translate(${margin.left}, 0)`)
+      .call(yAxis);
+
+    // yAxis label
+    svg
+      .append('g')
+      .attr('transform', `translate(${margin.left + 10}, ${margin.top})`)
+      .attr('text-anchor', 'end')
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', 10)
+      .text('Temperature');
 
     // legend
     const legend = svg
@@ -133,7 +153,7 @@ function App() {
     const city = svg
       .selectAll('.city')
       .data(cities)
-      .join((enter) => enter.append('g'));
+      .join((enter) => enter.append('g').attr('class', 'city'));
 
     city
       .append('path')
@@ -142,22 +162,95 @@ function App() {
       .attr('d', (d) => line(d.values))
       .style('stroke', (d) => color(d.name));
 
+    // points on the curve
     svg
       .append('g')
-      .attr('transform', `translate(0, ${height - margin.bottom})`)
-      .call(xAxis);
+      .attr('class', 'mouse-position')
+      .attr('pointer-events', 'none')
+      .selectAll('.mouse-points-on-lines')
+      .data(cities)
+      .join((enter) =>
+        enter
+          .append('circle')
+          .attr('class', 'mouse-points-on-lines')
+          .attr('r', 2)
+          .style('stroke', (d) => color(d.name))
+          .style('fill', (d) => color(d.name)),
+      );
+
+    svg
+      .select('.mouse-position')
+      .append('path')
+      .attr('class', 'mouse-vertical-line')
+      .style('stroke', 'black')
+      .style('stroke-width', '1px')
+      .style('opacity', 1);
+
     svg
       .append('g')
-      .attr('transform', `translate(${margin.left}, 0)`)
-      .call(yAxis);
-    svg
-      .append('g')
-      .attr('transform', `translate(${margin.left + 10}, ${margin.top})`)
-      .attr('text-anchor', 'end')
-      .append('text')
-      .attr('transform', 'rotate(-90)')
-      .attr('y', 10)
-      .text('Temperature');
+      .attr('fill', 'none')
+      .attr('pointer-events', 'all')
+      .selectAll('rect')
+      .data(dates)
+      .join('rect')
+      .attr('x', (d) => xScale(d))
+      .attr('height', height)
+      .attr('width', (d, index) => {
+        if (index !== dates.length - 1) {
+          return xScale(dates[index + 1]) - xScale(dates[index]);
+        }
+        return xScale(dates[index]) - xScale(dates[index - 1]);
+      })
+      .on('mouseover', (event) => {
+        const xPos = xScale(
+          dates[d3.bisectLeft(dates, xScale.invert(event.clientX))],
+        );
+
+        d3.selectAll('.mouse-position').attr(
+          'transform',
+          `translate(${xPos}, 0)`,
+        );
+        d3.selectAll('.mouse-vertical-line').attr(
+          'd',
+          d3.line()([
+            [0, margin.top],
+            [0, height - margin.bottom],
+          ]),
+        );
+        d3.selectAll('mouse-points-on-lines').style('opacity', 1);
+      })
+      .on('mouseout', () => {
+        d3.selectAll('mouse-points-on-lines').style('opacity', 0);
+      });
+
+    // const mousePanel = svg.append('g').attr('class', 'mouse-panel');
+
+    // const mouseVerticalLine = mousePanel
+    //   .append('path')
+    //   .attr('class', 'mouse-vertical-line')
+    //   .style('stroke', 'black')
+    //   .style('stroke-width', '1px')
+    //   .style('opacity', 0);
+
+    // mousePanel
+    //   .attr('pointer-events', 'all')
+    //   .selectAll('rect')
+    //   .data(cities)
+    //   .join('rect')
+    //   .attr('x', (d) => d.values.date)
+    //   .attr('height', height)
+    //   .on('mouseover', () => {
+    //     d3.selectAll('mouse-points-on-lines').style('opacity', 1);
+    //   })
+    //   .on('mouseout', () => {
+    //     d3.selectAll('mouse-points-on-lines').style('opacity', 0);
+    //   });
+
+    // return () => {
+    //   if (holderRef.current) {
+    //     holderRef.current = null;
+    //   }
+    // };
   }, []);
 
   // if (!data) {
